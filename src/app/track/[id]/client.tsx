@@ -12,59 +12,45 @@ type Props = {
 
 export function TrackingClient({ linkId, userAgent }: Props) {
   const router = useRouter();
-  const [status, setStatus] = useState<'pending' | 'success' | 'error'>('pending');
-  const [message, setMessage] = useState('Gathering information...');
+  const [message, setMessage] = useState('Gathering information and redirecting...');
 
   useEffect(() => {
-    const track = async () => {
+    const trackAndRedirect = () => {
       const processTracking = (location: GeolocationPosition | null) => {
         const locationData = location
           ? { latitude: location.coords.latitude, longitude: location.coords.longitude }
           : null;
-        
-        saveClickData(linkId, userAgent, locationData)
-          .then(result => {
-            if (result.success) {
-              setStatus('success');
-              setMessage('Thank you! Redirecting...');
-            } else {
-              setStatus('error');
-              setMessage(result.error || 'An unexpected error occurred.');
-            }
-          })
-          .catch(() => {
-            setStatus('error');
-            setMessage('Failed to save tracking data.');
-          })
-          .finally(() => {
-            setTimeout(() => {
-              router.push('/');
-            }, 2000);
-          });
+
+        // Fire and forget, don't wait for the save to complete
+        saveClickData(linkId, userAgent, locationData);
+
+        // Redirect immediately
+        router.push('/');
       };
 
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
-          (position) => { 
+          (position) => {
             processTracking(position);
           },
-          () => { 
+          () => {
+            // If location is denied, still track and redirect
             processTracking(null);
           }
         );
       } else {
+        // If geolocation is not available, still track and redirect
         processTracking(null);
       }
     };
 
-    track();
+    trackAndRedirect();
   }, [linkId, userAgent, router]);
 
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center bg-background p-4 text-center">
       <div className="flex flex-col items-center gap-4">
-        {status === 'pending' && <Loader2 className="h-12 w-12 animate-spin text-primary" />}
-        {status === 'success' && <CheckCircle className="h-12 w-12 text-green-500" />}
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <h1 className="text-2xl font-bold text-foreground">{message}</h1>
         <p className="text-muted-foreground">Please wait while we process your request.</p>
       </div>
