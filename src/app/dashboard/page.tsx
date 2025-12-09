@@ -29,7 +29,7 @@ export default async function DashboardPage() {
             <CardHeader>
                 <CardTitle>Clicks by Browser</CardTitle>
                 <CardDescription>Distribution of clicks across different browsers.</CardDescription>
-            </Header>
+            </CardHeader>
             <CardContent>
                 <ClicksChart clicks={clicks} />
             </CardContent>
